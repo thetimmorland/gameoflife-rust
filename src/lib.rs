@@ -46,20 +46,32 @@ impl Grid {
         let dec = |n: usize| n.checked_sub(1);
 
         let (x, y) = self.idx_to_coord(i);
-        let neighbours = [
-            (inc(x), inc(y)),
-            (dec(x), dec(y)),
-            (inc(x), dec(y)),
-            (dec(x), inc(y)),
-            (Some(x), inc(y)),
-            (inc(x), Some(y)),
-            (Some(x), dec(y)),
-            (dec(x), Some(y)),
-        ]
-        .into_iter()
-        .filter_map(|(x, y)| self.coord_to_idx(x?, y?));
 
-        self.count_living(neighbours)
+        // Cell X has 8 neighbours:
+        //   1 2 3
+        //   8 X 4
+        //   7 6 5
+        let neighbours = [
+            (dec(x), inc(y)),  // 1
+            (Some(x), inc(y)), // 2
+            (inc(x), inc(y)),  // 3
+            (inc(x), Some(y)), // 4
+            (inc(x), dec(y)),  // 5
+            (Some(x), dec(y)), // 6
+            (dec(x), dec(y)),  // 7
+            (dec(x), Some(y)), // 8
+        ];
+
+        let valid_neighbours = neighbours
+            .into_iter()
+            // Filter out coordinates for which x or y overflowed/underflowed.
+            // These coordinates are off the grid and can be ignored.
+            .filter_map(|(x, y)| Some((x?, y?)))
+            // Convert coordinates to linear indicies, filtering out those which
+            // could not be converted because they are located off the grid.
+            .filter_map(|(x, y)| self.coord_to_idx(x, y));
+
+        self.count_living(valid_neighbours)
     }
 
     fn next_at(&self, i: usize) -> bool {
